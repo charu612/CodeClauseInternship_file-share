@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureShare - File Sharing Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            background-size: 200% 100%;
+            animation: gradient 3s ease infinite;
+        }
+
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .file-drop-zone {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 50px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            background: #fafafa;
+        }
+
+        .file-drop-zone:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+            transform: translateY(-2px);
+        }
+
+        .file-drop-zone.drag-over {
+            border-color: #667eea;
+            background: #e8f2ff;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .options-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .option-group {
+            margin-bottom: 20px;
+        }
+
+        .option-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .option-label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .checkbox {
+            margin-right: 10px;
+            transform: scale(1.2);
+        }
+
+        .upload-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .upload-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e1e5e9;
+            border-radius: 3px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .result-section {
+            display: none;
+            background: #e8f5e8;
+            border: 2px solid #4caf50;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 3rem;
+            color: #4caf50;
+            margin-bottom: 15px;
+        }
+
+        .share-link {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 12px;
+            word-break: break-all;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+
+        .copy-btn {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #45a049;
+            transform: translateY(-1px);
+        }
+
+        .file-info {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c62828;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+                margin: 10px;
+            }
+            
+            .logo {
+                font-size: 2rem;
+            }
+            
+            .file-drop-zone {
+                padding: 30px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">🔐 SecureShare</div>
+            <div class="subtitle">Share files securely without registration</div>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="upload-section">
+                <div class="file-drop-zone" id="dropZone">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Drag & drop your file here</div>
+                    <div class="upload-subtext">or click to browse (Max: 100MB)</div>
+                    <input type="file" id="fileInput" class="file-input" name="file" required>
+                </div>
+                <div class="file-info" id="fileInfo" style="display: none;"></div>
+            </div>
+
+            <div class="options-section">
+                <div class="option-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="passwordProtection" class="checkbox">
+                        <label for="passwordProtection" class="option-label">Password Protection</label>
+                    </div>
+                    <input type="password" id="filePassword" class="form-input" placeholder="Enter password for the file" disabled>
+                </div>
+
+                <div class="option-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="setExpiry" class="checkbox">
+                        <label for="setExpiry" class="option-label">Set Expiry Date</label>
+                    </div>
+                    <input type="datetime-local" id="expiryDate" class="form-input" disabled>
+                </div>
+            </div>
+
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <button type="submit" class="upload-btn" id="uploadBtn">
+                <span id="btnText">🚀 Share File</span>
+            </button>
+        </form>
+
+        <div class="result-section" id="resultSection">
+            <div class="success-icon">✅</div>
+            <h3>File uploaded successfully!</h3>
+            <div class="share-link" id="shareLink"></div>
+            <button class="copy-btn" onclick="copyToClipboard()">📋 Copy Link</button>
+            <div style="margin-top: 15px; font-size: 0.9rem; color: #666;" id="fileDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const passwordProtection = document.getElementById('passwordProtection');
+        const filePassword = document.getElementById('filePassword');
+        const setExpiry = document.getElementById('setExpiry');
+        const expiryDate = document.getElementById('expiryDate');
+        const uploadForm = document.getElementById('uploadForm');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const btnText = document.getElementById('btnText');
+        const resultSection = document.getElementById('resultSection');
+        const shareLink = document.getElementById('shareLink');
+        const fileDetails = document.getElementById('fileDetails');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Set minimum date to current time
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        expiryDate.min = now.toISOString().slice(0, 16);
+
+        // Drag and drop functionality
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                displayFileInfo(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                displayFileInfo(e.target.files[0]);
+            }
+        });
+
+        function displayFileInfo(file) {
+            const size = formatFileSize(file.size);
+            const maxSize = 100 * 1024 * 1024; // 100MB
+            
+            if (file.size > maxSize) {
+                showError('File size exceeds 100MB limit. Please choose a smaller file.');
+                fileInput.value = '';
+                fileInfo.style.display = 'none';
+                return;
+            }
+
+            fileInfo.innerHTML = `
+                <strong>Selected File:</strong> ${file.name}<br>
+                <strong>Size:</strong> ${size}<br>
+                <strong>Type:</strong> ${file.type || 'Unknown'}
+            `;
+            fileInfo.style.display = 'block';
+            hideError();
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Toggle password input
+        passwordProtection.addEventListener('change', () => {
+            filePassword.disabled = !passwordProtection.checked;
+            if (!passwordProtection.checked) {
+                filePassword.value = '';
+            }
+        });
+
+        // Toggle expiry date input
+        setExpiry.addEventListener('change', () => {
+            expiryDate.disabled = !setExpiry.checked;
+            if (!setExpiry.checked) {
+                expiryDate.value = '';
+            }
+        });
+
+        // Form submission
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!fileInput.files[0]) {
+                showError('Please select a file to upload.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            if (passwordProtection.checked && filePassword.value) {
+                formData.append('password', filePassword.value);
+            }
+            
+            if (setExpiry.checked && expiryDate.value) {
+                formData.append('expiry', expiryDate.value);
+            }
+
+            try {
+                uploadBtn.disabled = true;
+                btnText.textContent = '⏳ Uploading...';
+                progressBar.style.display = 'block';
+                hideError();
+
+                // Simulate upload progress
+                simulateProgress();
+
+                const response = await fetch('upload.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showSuccess(result);
+                } else {
+                    showError(result.message || 'Upload failed. Please try again.');
+                }
+            } catch (error) {
+                showError('Network error. Please check your connection and try again.');
+            } finally {
+                uploadBtn.disabled = false;
+                btnText.textContent = '🚀 Share File';
+                progressBar.style.display = 'none';
+                progressFill.style.width = '0%';
+            }
+        });
+
+        function simulateProgress() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 90) {
+                    clearInterval(interval);
+                    progress = 90;
+                }
+                progressFill.style.width = progress + '%';
+            }, 200);
+        }
+
+        function showSuccess(result) {
+            const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '');
+            const fullLink = `${baseUrl}download.php?id=${result.fileId}`;
+            
+            shareLink.textContent = fullLink;
+            
+            let details = `File ID: ${result.fileId}`;
+            if (result.hasPassword) {
+                details += ' | Password Protected';
+            }
+            if (result.expiryDate) {
+                details += ` | Expires: ${new Date(result.expiryDate).toLocaleString()}`;
+            }
+            
+            fileDetails.textContent = details;
+            resultSection.style.display = 'block';
+            uploadForm.style.display = 'none';
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        function copyToClipboard() {
+            const link = shareLink.textContent;
+            navigator.clipboard.writeText(link).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.style.background = '#4caf50';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#4caf50';
+                }, 2000);
+            });
+        }
+
+        // Reset form function
+        function resetForm() {
+            uploadForm.style.display = 'block';
+            resultSection.style.display = 'none';
+            uploadForm.reset();
+            fileInfo.style.display = 'none';
+            filePassword.disabled = true;
+            expiryDate.disabled = true;
+            hideError();
+        }
+
+        // Add reset button to result section
+        resultSection.innerHTML += '<br><button class="copy-btn" onclick="resetForm()" style="background: #667eea; margin-top: 10px;">📤 Upload Another File</button>';
+    </script>
+</body>
+</html>
